@@ -1,8 +1,12 @@
-This project predicts employee performance risk levels using machine learning.
+# AI-Based Employee Performance Risk Prediction System
+
+A machine learning project that predicts employee performance risk levels using HR-related data.
 
 ## Project Overview
 
-The system uses HR-related data such as attendance rate, absent days, late days, task completion count, average task rating, overtime hours, and previous performance score to predict whether an employee is at Low, Medium, or High risk.
+This project predicts whether an employee is in a Low, Medium, or High risk category based on attendance, absenteeism, task completion, task rating, overtime hours and previous performance score.
+
+The project was created to understand how machine learning can be applied in an HR and product-based environment.
 
 ## Technologies Used
 
@@ -15,13 +19,16 @@ The system uses HR-related data such as attendance rate, absent days, late days,
 
 ## Features
 
-- Predicts employee risk level
-- Uses a trained machine learning model
-- Provides a simple web interface
+- Predicts employee performance risk level
+- Uses HR-related employee data
+- Trains a machine learning classification model
+- Saves the trained model using Joblib
+- Provides a simple Streamlit web interface
 - Displays Low, Medium, or High risk prediction
-- Beginner-friendly AI/ML project
 
 ## Dataset Features
+
+The model uses the following input features:
 
 - Attendance Rate
 - Late Days
@@ -31,7 +38,19 @@ The system uses HR-related data such as attendance rate, absent days, late days,
 - Overtime Hours
 - Previous Performance Score
 
-## How to Run
+## Machine Learning Workflow
+
+1. Load the employee dataset
+2. Separate input features and target label
+3. Split data into training and testing sets
+4. Train a Random Forest Classifier
+5. Evaluate the model
+6. Save the trained model
+7. Use the saved model in a Streamlit app
+
+## How to Run the Project
+
+Install required packages:
 
 ```bash
 pip install -r requirements.txt
