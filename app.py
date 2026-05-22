@@ -1,57 +1,664 @@
-import streamlit as st
+from pathlib import Path
+
 import joblib
 import pandas as pd
+import streamlit as st
 
-# Load the trained model
-model = joblib.load("model/employee_risk_model.pkl")
 
-st.set_page_config(page_title="Employee Risk Prediction System", layout="centered")
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / "model" / "employee_risk_model.pkl"
 
-st.title("AI-Based Employee Performance Risk Prediction System")
 
-st.write(
-    "This application predicts whether an employee has Low, Medium or High performance risk based on HR-related data."
+st.set_page_config(
+    page_title="Employee Risk Intelligence",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
-# User inputs
-attendance_rate = st.number_input("Attendance Rate (%)", min_value=0, max_value=100, value=85)
-late_days = st.number_input("Late Days", min_value=0, max_value=31, value=2)
-absent_days = st.number_input("Absent Days", min_value=0, max_value=31, value=1)
-tasks_completed = st.number_input("Tasks Completed", min_value=0, max_value=100, value=20)
-average_task_rating = st.number_input("Average Task Rating (1-5)", min_value=1.0, max_value=5.0, value=4.0)
-overtime_hours = st.number_input("Overtime Hours", min_value=0, max_value=100, value=5)
-previous_performance_score = st.number_input("Previous Performance Score", min_value=0, max_value=100, value=75)
 
-# Predict button
-if st.button("Predict Risk Level"):
-    input_data = pd.DataFrame(
-        [[
-            attendance_rate,
-            late_days,
-            absent_days,
-            tasks_completed,
-            average_task_rating,
-            overtime_hours,
-            previous_performance_score,
-        ]],
-        columns=[
-            "attendance_rate",
-            "late_days",
-            "absent_days",
-            "tasks_completed",
-            "average_task_rating",
-            "overtime_hours",
-            "previous_performance_score",
-        ],
+@st.cache_resource
+def load_model():
+    """Load the trained employee risk prediction model."""
+    return joblib.load(MODEL_PATH)
+
+
+model = load_model()
+
+
+st.markdown(
+    """
+    <style>
+        :root {
+            --primary: #6A0000;
+            --primary-dark: #360000;
+            --primary-soft: #F8EDED;
+            --primary-softer: #FFF7F7;
+            --text-main: #241111;
+            --text-muted: #715757;
+            --border-soft: rgba(106, 0, 0, 0.14);
+            --white: #FFFFFF;
+        }
+
+        .stApp {
+            background:
+                radial-gradient(circle at top left, rgba(106, 0, 0, 0.16), transparent 34%),
+                linear-gradient(135deg, #FFFFFF 0%, #FFF8F8 42%, #F6E8E8 100%);
+            color: var(--text-main);
+        }
+
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            max-width: 1180px;
+        }
+
+        header[data-testid="stHeader"] {
+            background: transparent;
+        }
+
+        div[data-testid="stToolbar"] {
+            visibility: hidden;
+            height: 0%;
+            position: fixed;
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 34px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, #6A0000 0%, #4B0000 52%, #220000 100%);
+            color: white;
+            box-shadow: 0 24px 70px rgba(106, 0, 0, 0.26);
+            margin-bottom: 24px;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -80px;
+            top: -90px;
+            width: 260px;
+            height: 260px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .brand-mark {
+            width: 50px;
+            height: 50px;
+            border-radius: 16px;
+            display: grid;
+            place-items: center;
+            background: white;
+            color: var(--primary);
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: -0.08em;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+        }
+
+        .eyebrow {
+            margin: 0;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .hero h1 {
+            margin: 0 0 12px 0;
+            font-size: clamp(2rem, 5vw, 4.2rem);
+            line-height: 0.95;
+            letter-spacing: -0.06em;
+            color: white;
+        }
+
+        .hero p {
+            max-width: 720px;
+            margin: 0;
+            color: rgba(255, 255, 255, 0.86);
+            font-size: 1.05rem;
+            line-height: 1.75;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 26px;
+        }
+
+        .stat-pill {
+            padding: 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            backdrop-filter: blur(8px);
+        }
+
+        .stat-pill strong {
+            display: block;
+            color: #FFFFFF;
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+
+        .stat-pill span {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.88rem;
+        }
+
+        .section-card,
+        div[data-testid="stForm"] {
+            padding: 24px;
+            border-radius: 26px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid var(--border-soft);
+            box-shadow: 0 18px 48px rgba(106, 0, 0, 0.10);
+            margin-bottom: 18px;
+        }
+
+        div[data-testid="stForm"] {
+            border-color: var(--border-soft);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .section-title h2,
+        .section-title h3 {
+            margin: 0;
+            color: var(--primary-dark);
+            letter-spacing: -0.04em;
+        }
+
+        .section-title p {
+            margin: 8px 0 0;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        .soft-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 13px;
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 0.82rem;
+            white-space: nowrap;
+            border: 1px solid var(--border-soft);
+        }
+
+        div[data-testid="stNumberInput"] label,
+        div[data-testid="stSlider"] label {
+            color: var(--primary-dark) !important;
+            font-weight: 800 !important;
+        }
+
+        div[data-baseweb="input"] > div,
+        input,
+        textarea {
+            border-radius: 14px !important;
+        }
+
+        .stNumberInput input {
+            border: 1px solid rgba(106, 0, 0, 0.18) !important;
+            background: #FFFFFF !important;
+            color: var(--text-main) !important;
+            font-weight: 700;
+        }
+
+        div.stButton > button,
+        div[data-testid="stFormSubmitButton"] button {
+            width: 100%;
+            border: 0;
+            border-radius: 16px;
+            padding: 0.9rem 1.2rem;
+            background: linear-gradient(135deg, #6A0000, #3C0000) !important;
+            color: #FFFFFF !important;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            box-shadow: 0 16px 34px rgba(106, 0, 0, 0.22);
+            transition: all 0.2s ease;
+        }
+
+        div.stButton > button:hover,
+        div[data-testid="stFormSubmitButton"] button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 44px rgba(106, 0, 0, 0.30);
+        }
+
+        .snapshot-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .mini-card {
+            padding: 16px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #FFFFFF, #FFF7F7);
+            border: 1px solid rgba(106, 0, 0, 0.12);
+        }
+
+        .mini-card span {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .mini-card strong {
+            display: block;
+            margin-top: 8px;
+            color: var(--primary-dark);
+            font-size: 1.65rem;
+            letter-spacing: -0.04em;
+        }
+
+        .result-card {
+            border-radius: 28px;
+            padding: 28px;
+            border: 1px solid rgba(106, 0, 0, 0.14);
+            background: #FFFFFF;
+            box-shadow: 0 18px 52px rgba(106, 0, 0, 0.14);
+            margin-top: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 8px;
+            background: var(--primary);
+        }
+
+        .result-topline {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .result-kicker {
+            margin: 0 0 8px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .result-card h2 {
+            margin: 0;
+            color: var(--primary-dark);
+            font-size: 2rem;
+            letter-spacing: -0.05em;
+        }
+
+        .risk-badge {
+            padding: 12px 16px;
+            border-radius: 999px;
+            background: var(--primary);
+            color: #FFFFFF;
+            font-weight: 900;
+            box-shadow: 0 12px 28px rgba(106, 0, 0, 0.22);
+            white-space: nowrap;
+        }
+
+        .result-description {
+            color: var(--text-muted);
+            line-height: 1.65;
+            font-size: 1rem;
+            margin: 0 0 18px;
+        }
+
+        .recommendation-box {
+            padding: 18px;
+            border-radius: 20px;
+            background: var(--primary-softer);
+            border: 1px solid var(--border-soft);
+        }
+
+        .recommendation-box h4 {
+            margin: 0 0 10px;
+            color: var(--primary-dark);
+        }
+
+        .recommendation-box ul {
+            margin: 0;
+            padding-left: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .footer-note strong {
+            color: var(--primary);
+        }
+
+        hr {
+            border-color: rgba(106, 0, 0, 0.12) !important;
+        }
+
+        @media (max-width: 768px) {
+            .block-container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .hero {
+                padding: 24px;
+                border-radius: 24px;
+            }
+
+            .hero-stats,
+            .snapshot-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title,
+            .result-topline {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+st.markdown(
+    """
+    <section class="hero">
+        <div class="brand-row">
+            <div class="brand-mark">ER</div>
+            <div>
+                <p class="eyebrow">AI HR Analytics</p>
+                <strong>Employee Risk Intelligence</strong>
+            </div>
+        </div>
+        <h1>Predict performance risk with a cleaner HR dashboard.</h1>
+        <p>
+            Enter attendance, productivity, overtime, and previous performance details to estimate
+            whether an employee is at Low, Medium, or High performance risk.
+        </p>
+        <div class="hero-stats">
+            <div class="stat-pill"><strong>7</strong><span>HR indicators analyzed</span></div>
+            <div class="stat-pill"><strong>3</strong><span>Risk levels predicted</span></div>
+            <div class="stat-pill"><strong>AI</strong><span>Random Forest model</span></div>
+        </div>
+    </section>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+left_col, right_col = st.columns([1.25, 0.9], gap="large")
+
+with left_col:
+    with st.form("risk_prediction_form"):
+        st.markdown(
+            """
+            <div class="section-title">
+                <div>
+                    <h2>Employee Details</h2>
+                    <p>Fill in the employee's current performance indicators below.</p>
+                </div>
+                <span class="soft-badge">● Prediction Form</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            attendance_rate = st.number_input(
+                "Attendance Rate (%)",
+                min_value=0,
+                max_value=100,
+                value=85,
+                help="Overall attendance percentage for the evaluation period.",
+            )
+            absent_days = st.number_input(
+                "Absent Days",
+                min_value=0,
+                max_value=31,
+                value=1,
+                help="Number of full absent days recorded.",
+            )
+            average_task_rating = st.number_input(
+                "Average Task Rating (1-5)",
+                min_value=1.0,
+                max_value=5.0,
+                value=4.0,
+                step=0.1,
+                help="Average quality rating for completed tasks.",
+            )
+            previous_performance_score = st.number_input(
+                "Previous Performance Score",
+                min_value=0,
+                max_value=100,
+                value=75,
+                help="Employee's previous performance review score.",
+            )
+
+        with col2:
+            late_days = st.number_input(
+                "Late Days",
+                min_value=0,
+                max_value=31,
+                value=2,
+                help="Number of late arrival days recorded.",
+            )
+            tasks_completed = st.number_input(
+                "Tasks Completed",
+                min_value=0,
+                max_value=100,
+                value=20,
+                help="Number of tasks completed in the evaluation period.",
+            )
+            overtime_hours = st.number_input(
+                "Overtime Hours",
+                min_value=0,
+                max_value=100,
+                value=5,
+                help="Total overtime hours recorded.",
+            )
+            st.write("")
+            st.write("")
+            submitted = st.form_submit_button("Analyze Employee Risk")
+
+
+with right_col:
+    attendance_pressure = late_days + absent_days
+    productivity_index = tasks_completed * average_task_rating
+
+    st.markdown(
+        f"""
+        <div class="section-card">
+            <div class="section-title">
+                <div>
+                    <h3>Live Employee Snapshot</h3>
+                    <p>A quick visual summary of the values entered in the form.</p>
+                </div>
+            </div>
+            <div class="snapshot-grid">
+                <div class="mini-card"><span>Attendance</span><strong>{attendance_rate}%</strong></div>
+                <div class="mini-card"><span>Late + Absent</span><strong>{attendance_pressure}</strong></div>
+                <div class="mini-card"><span>Productivity Index</span><strong>{productivity_index:.1f}</strong></div>
+                <div class="mini-card"><span>Previous Score</span><strong>{previous_performance_score}</strong></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
+    st.markdown("#### Attendance Health")
+    st.progress(attendance_rate / 100)
+    st.markdown("#### Previous Performance")
+    st.progress(previous_performance_score / 100)
+
+
+input_data = pd.DataFrame(
+    [[
+        attendance_rate,
+        late_days,
+        absent_days,
+        tasks_completed,
+        average_task_rating,
+        overtime_hours,
+        previous_performance_score,
+    ]],
+    columns=[
+        "attendance_rate",
+        "late_days",
+        "absent_days",
+        "tasks_completed",
+        "average_task_rating",
+        "overtime_hours",
+        "previous_performance_score",
+    ],
+)
+
+
+risk_content = {
+    "Low": {
+        "title": "Low Performance Risk",
+        "badge": "Low Risk",
+        "description": "This employee currently shows healthy performance indicators and is likely to remain stable if current support continues.",
+        "actions": [
+            "Maintain regular feedback and recognition.",
+            "Keep tracking attendance and task quality trends.",
+            "Offer growth opportunities to sustain motivation.",
+        ],
+    },
+    "Medium": {
+        "title": "Medium Performance Risk",
+        "badge": "Medium Risk",
+        "description": "This employee may need additional support. Some indicators suggest the possibility of performance decline if issues are not addressed early.",
+        "actions": [
+            "Schedule a supportive one-to-one discussion.",
+            "Review attendance, workload, and task blockers.",
+            "Set a short 30-day improvement and coaching plan.",
+        ],
+    },
+    "High": {
+        "title": "High Performance Risk",
+        "badge": "High Risk",
+        "description": "This employee needs immediate attention. The entered indicators suggest a higher chance of performance or attendance-related concerns.",
+        "actions": [
+            "Arrange an urgent performance support meeting.",
+            "Identify root causes such as workload, absence, or skill gaps.",
+            "Create a clear improvement plan with measurable checkpoints.",
+        ],
+    },
+}
+
+
+if submitted:
     prediction = model.predict(input_data)[0]
+    details = risk_content.get(prediction, risk_content["Medium"])
 
-    st.subheader("Prediction Result")
+    confidence_markup = ""
+    if hasattr(model, "predict_proba"):
+        probabilities = model.predict_proba(input_data)[0]
+        class_names = list(model.classes_)
+        if prediction in class_names:
+            confidence = probabilities[class_names.index(prediction)] * 100
+            confidence_markup = f"<span class='soft-badge'>Model confidence: {confidence:.1f}%</span>"
 
-    if prediction == "Low":
-        st.success("Low Risk: Employee performance is good.")
-    elif prediction == "Medium":
-        st.warning("Medium Risk: Employee may need some support.")
-    else:
-        st.error("High Risk: Employee may need attention or improvement support.")
+    action_items = "".join(f"<li>{item}</li>" for item in details["actions"])
+
+    st.markdown(
+        f"""
+        <div class="result-card">
+            <div class="result-topline">
+                <div>
+                    <p class="result-kicker">Prediction Result</p>
+                    <h2>{details['title']}</h2>
+                </div>
+                <div class="risk-badge">{details['badge']}</div>
+            </div>
+            <p class="result-description">{details['description']}</p>
+            {confidence_markup}
+            <br><br>
+            <div class="recommendation-box">
+                <h4>Recommended HR Actions</h4>
+                <ul>{action_items}</ul>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("View input values used for this prediction"):
+        readable_input = input_data.rename(
+            columns={
+                "attendance_rate": "Attendance Rate (%)",
+                "late_days": "Late Days",
+                "absent_days": "Absent Days",
+                "tasks_completed": "Tasks Completed",
+                "average_task_rating": "Average Task Rating",
+                "overtime_hours": "Overtime Hours",
+                "previous_performance_score": "Previous Performance Score",
+            }
+        )
+        st.dataframe(readable_input, use_container_width=True, hide_index=True)
+else:
+    st.markdown(
+        """
+        <div class="section-card">
+            <div class="section-title">
+                <div>
+                    <h3>Ready to analyze</h3>
+                    <p>Enter the employee details and click <strong>Analyze Employee Risk</strong> to view the AI prediction and recommended HR actions.</p>
+                </div>
+                <span class="soft-badge">Waiting for input</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+st.markdown(
+    """
+    <p class="footer-note">
+        Built with <strong>Streamlit</strong> for employee performance risk prediction.
+    </p>
+    """,
+    unsafe_allow_html=True,
+)
